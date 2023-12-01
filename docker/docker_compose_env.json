@@ -1,0 +1,21 @@
+{
+  "cardsinitial": [
+    {
+      "name": "ADDITIONAL_SLING_FEATURES",
+      "value": "$ADDITIONAL_SLING_FEATURES$",
+      "conditions": null
+    },
+    {
+      "name": "PROJECT_NAME",
+      "value": "$PROJECT_CODENAME$",
+      "conditions": null
+    }
+  ],
+  "proxy": [
+    {
+      "name": "CARDS_APP_NAME",
+      "value": "$PROJECT_NAME$",
+      "conditions": null
+    }
+  ]
+}

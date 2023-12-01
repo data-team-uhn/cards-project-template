@@ -1,0 +1,6 @@
+{
+  "jcr:primaryType": "nt:unstructured",
+  "logoDark": "/libs/cards/resources/media/$PROJECT_LOGO$",
+  "logoLight": "/libs/cards/resources/media/$PROJECT_LOGO_LIGHT$",
+  "sidebarBackground": "/libs/cards/resources/media/default/background.jpg"
+}
