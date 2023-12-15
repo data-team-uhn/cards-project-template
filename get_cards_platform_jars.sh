@@ -36,6 +36,19 @@ do
   if [[ $VARIANT -ne "1" && $VARIANT -ne "2" ]]
   then
     echo "Unknown answer, please choose either 1 or 2"
+  elif [[ $VARIANT -eq "1" ]]
+  then
+    docker run --rm  --entrypoint /bin/sh $LOCAL_CARDS_DOCKER_IMAGE -c "ls -al /root/.m2/repository" >/dev/null 2>/dev/null
+    STATUS=$?
+    if [[ $STATUS -eq 125 ]]
+    then
+      echo "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
+      VARIANT=0
+    elif [[ $STATUS -eq 1 ]]
+    then
+      echo "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
+      VARIANT=0
+    fi
   fi
 done
 
@@ -60,7 +73,7 @@ docker run \
 
 if [[ $? -ne 0 ]]
 then
-  echo "Failed to extract the needed files. Make sure you build a production-ready image, follow the instructions in the CARDS readme."
+  echo "Error: Failed to extract the needed files from the generic CARDS image."
   exit 1
 else
   echo "CARDS generic jars extracted!"
