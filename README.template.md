@@ -25,11 +25,11 @@ There are two sets of maven build profiles you can choose from:
 - if you want to use a `local`, `published`, or `latest` image for the base CARDS project
 - and if you want to build a `production` or `development` image
 
-A development image will be slimmer, since it skips copying any of the built JARs into the Docker image, so it must be used on the same machine where it was built, using the local maven repository as a source for dependencies.
+A _development_ image will be slimmer, since it skips copying any of the built JARs into the Docker image, so it must be used on the same machine where it was built, using the local maven repository as a source for dependencies.
 Therefore, the resultant image should only be used with the `--dev_docker_image` and `--cards_generic_jars_repo` flags for `generate_compose_yaml.py`.
 This is useful for testing new code during development as it does not require a new Docker image to be built every time that code is changed.
 
-A production image will be self-contained, and can be started on any computer, even without access to internet. In this case, the base CARDS image you use must also be a production image.
+A _production_ image will be self-contained, and can be started on any computer, even without access to internet. In this case, the base CARDS image you use must also be a production image.
 
 As for the base image to use, `local` will use a CARDS image built on the same computer, but with a version matching the `cards.version` property, e.g. `cards/cards:0.9.20`,
 `published` will use an image with a matching version fetched from our github package repository, e.g. `ghcr.io/data-team-uhn/cards:0.9.20`,
