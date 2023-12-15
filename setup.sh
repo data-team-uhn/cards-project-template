@@ -29,8 +29,12 @@ fi
 declare -a RELEASED_VERSIONS=( $(curl -s https://nexus.phenotips.org/nexus/content/repositories/releases/io/uhndata/cards/cards-modules/maven-metadata.xml | grep '<version>' | tac | cut '-d>' -f2 | cut '-d<' -f1) )
 declare -i RELEASED_VERSIONS_COUNT=${#RELEASED_VERSIONS[*]}
 # Look on the local disk
-LOCAL_CARDS_VERSION=$(grep --max-count=1 '^  <version>' ../cards/pom.xml | cut '-d>' -f2 | cut '-d<' -f1)
-declare VERSIONS
+LOCAL_CARDS_VERSION=$(grep --max-count=1 '^  <version>' ../cards/pom.xml 2>/dev/null | cut '-d>' -f2 | cut '-d<' -f1)
+declare VERSION
+if [[ -n $LOCAL_CARDS_VERSION ]]
+then
+  VERSION="${LOCAL_CARDS_VERSION} ${LOCAL_CARDS_VERSION} OFF "
+fi
 for (( i=0 ; i<RELEASED_VERSIONS_COUNT; i++ ))
 do
   VERSION="${VERSION} ${RELEASED_VERSIONS[$i]} ${RELEASED_VERSIONS[$i]}"
