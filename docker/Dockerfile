@@ -32,5 +32,5 @@ COPY project_logo.png /metadata/logo.png
 COPY .m2/repository /root/.m2/repository
 
 # Set the current project version
-ENV PROJECT_NAME=$PROJECT_CODENAME$
-ENV PROJECT_VERSION=${project.version}
+ENV CARDS_PROJECT=$PROJECT_CODENAME$
+ENV CARDS_PROJECT_VERSION=${project.version}
