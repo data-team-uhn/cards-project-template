@@ -17,6 +17,12 @@
 #  limitations under the License.
 
 # Check the user's authorship configuration
+if ! $(git config user.name 1> /dev/null) || ! $(git config user.email 1> /dev/null)
+then
+  whiptail --backtitle "New CARDS repository setup" --msgbox "You must configure the user name and email address with \"git config user.name Some Name\" and \"git config user.email somebody@email.com\" and then rerun this script. Exiting." 9 78
+  exit 1
+fi
+
 if ! whiptail --backtitle "New CARDS repository setup" --title "Please confirm git authorship details" --yesno "Committing as $(git config user.name) <$(git config user.email)>, OK?" 8 78
 then
   whiptail --backtitle "New CARDS repository setup" --msgbox "You can configure the user name and email address with \"git config user.name Some Name\" and \"git config user.email somebody@email.com\" and then rerun this script. Exiting." 9 78
