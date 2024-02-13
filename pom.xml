@@ -22,7 +22,7 @@
   <parent>
     <groupId>io.uhndata.cards</groupId>
     <artifactId>cards-parent</artifactId>
-    <version>1</version>
+    <version>$CARDS_VERSION$</version>
   </parent>
 
   <artifactId>$PROJECT_SHORTNAME$-parent</artifactId>
@@ -30,10 +30,6 @@
   <packaging>pom</packaging>
   <name>CARDS for $PROJECT_NAME$</name>
   <description>A CARDS based project.</description>
-
-  <properties>
-    <cards.version>$CARDS_VERSION$</cards.version>
-  </properties>
 
   <repositories>
     <repository>
