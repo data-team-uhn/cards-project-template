@@ -31,30 +31,39 @@ fi
 
 # Ask about the generic CARDS version to use
 
-# Get the latest CARDS version from Nexus
-declare -a RELEASED_VERSIONS=( $(curl -s https://nexus.phenotips.org/nexus/content/repositories/releases/io/uhndata/cards/cards-modules/maven-metadata.xml | grep '<version>' | tac | cut '-d>' -f2 | cut '-d<' -f1) )
+# Get the available CARDS versions from Maven Central
+declare -a RELEASED_VERSIONS=( $(curl -s https://repo1.maven.org/maven2/io/uhndata/cards/cards-modules/maven-metadata.xml | grep '<version>' | tac | cut '-d>' -f2 | cut '-d<' -f1) )
 declare -i RELEASED_VERSIONS_COUNT=${#RELEASED_VERSIONS[*]}
 # Look on the local disk
 LOCAL_CARDS_VERSION=$(grep --max-count=1 '^  <version>' ../cards/pom.xml 2>/dev/null | cut '-d>' -f2 | cut '-d<' -f1)
 declare VERSION
-if [[ -n $LOCAL_CARDS_VERSION ]]
-then
-  VERSION="${LOCAL_CARDS_VERSION} ${LOCAL_CARDS_VERSION} OFF "
-fi
+declare HAS_DEFAULT
 for (( i=0 ; i<RELEASED_VERSIONS_COUNT; i++ ))
 do
-  VERSION="${VERSION} ${RELEASED_VERSIONS[$i]} ${RELEASED_VERSIONS[$i]}"
-  if [[ $i == 0 ]]
-  then
-    VERSION+=" ON "
-  else
-    VERSION+=" OFF "
-  fi
+  VERSION="${VERSION} ${RELEASED_VERSIONS[$i]} ${RELEASED_VERSIONS[$i]} ${HAS_DEFAULT:-ON} "
+  HAS_DEFAULT=OFF
 done
+if [[ -n $LOCAL_CARDS_VERSION ]]
+then
+  VERSION="${LOCAL_CARDS_VERSION} ${LOCAL_CARDS_VERSION} ${HAS_DEFAULT:-ON} ${VERSION}"
+  HAS_DEFAULT=OFF
+fi
+VERSION="${VERSION} other other ${HAS_DEFAULT:-ON}"
 CARDS_VERSION=$(whiptail --backtitle "New CARDS repository setup" --title "Base CARDS version" --radiolist --notags "Which version of the CARDS platform should be used?" 38 78 30 $VERSION 3>&1 1>&2 2>&3)
 if [[ $? == 1 ]]
 then
   exit 1
+fi
+if [[ $CARDS_VERSION == "other" ]]
+then
+  until [[ $CARDS_VERSION != "other" && -n $CARDS_VERSION ]]
+  do
+    CARDS_VERSION=$(whiptail --backtitle "New CARDS repository setup" --title "Base CARDS version" --inputbox "Which version of the CARDS platform should be used? e.g. 0.9.22" 8 78 3>&1 1>&2 2>&3)
+    if [[ $? == 1 ]]
+    then
+      exit 1
+    fi
+  done
 fi
 
 # Ask about the project name
