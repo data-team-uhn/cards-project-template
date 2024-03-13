@@ -52,6 +52,10 @@
     </repository>
   </repositories>
 
+  <properties>
+    <cards.version>$CARDS_VERSION$</cards.version>
+  </properties>
+
   <modules>
     <module>backend</module>
     <module>resources</module>
