@@ -127,8 +127,9 @@ fi
 # Get the list of features already included in the base distribution
 # Then get the list of all features known, excluding the cards4* projects
 # Then subtract included features from the list of all known features
-declare -a features=( $(find ~/.m2/repository/io/uhndata/cards/cards/${CARDS_VERSION}/ -type f -name '*slingosgifeature' | sed -r -e "s/.*${CARDS_VERSION}-(.*).slingosgifeature/-e \1/" -e /cards/d) )
-features=( $(find ~/.m2/repository/io/uhndata/cards/ -type f -name "*${CARDS_VERSION}.slingosgifeature" | grep -v -e 'cards4' | grep -v ${features[*]} | sed -r -e "s/.*\/(.*)-${CARDS_VERSION}.slingosgifeature/\1/") )
+./get_cards_platform_jars.sh ${CARDS_VERSION}
+declare -a features=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/cards/${CARDS_VERSION}/ -type f -name '*slingosgifeature' | sed -r -e "s/.*${CARDS_VERSION}-(.*).slingosgifeature/-e \1/" -e /cards/d) )
+features=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/ -type f -name "*${CARDS_VERSION}.slingosgifeature" | grep -v -e 'cards4' | grep -v ${features[*]} | sed -r -e "s/.*\/(.*)-${CARDS_VERSION}.slingosgifeature/\1/") )
 declare -i featureCount=${#features[*]}
 declare featurelist
 for (( i=0 ; i<featureCount; i++ ))
