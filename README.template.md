@@ -67,7 +67,17 @@ docker-compose up -d
 
 $PROJECT_CODENAME$ will be available at http://localhost:8080 once it starts.
 
+Run `python3 generate_compose_yaml.py --help` to find out more about the parameters supported by the script, such as using Mongo for storage, using different ports, or configuring SAML authentication.
+
 ### Development Mode
+
+#### Quick run with Docker
+
+After you build a docker image, you can quickly run a non-persistent image with:
+
+```bash
+docker run -it --rm --env OAK_FILESYSTEM=true --env ADDITIONAL_SLING_FEATURES=$ADDITIONAL_SLING_FEATURES_DOCKER$ -p 8080:8080 cards/$PROJECT_CODENAME$:latest
+```
 
 #### Using `./start_cards.sh`
 

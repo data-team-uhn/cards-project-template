@@ -151,9 +151,11 @@ if [[ -z $ADDITIONAL_SLING_FEATURES_DOCKER ]]
 then
   sed -i -e '/ADDITIONAL_SLING_FEATURES/,+4d' docker/docker_compose_env.json
   sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$//g" README.template.md
+  sed -i -e "s/ --env ADDITIONAL_SLING_FEATURES=\\\$ADDITIONAL_SLING_FEATURES_DOCKER\\\$//g" README.template.md
 else
   sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$/${ADDITIONAL_SLING_FEATURES_DOCKER//\//\\\/}/g" docker/docker_compose_env.json
   sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$/-f '${ADDITIONAL_SLING_FEATURES_STARTSH//\//\\\/}'/g" README.template.md
+  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES_DOCKER\\\$/'${ADDITIONAL_SLING_FEATURES_STARTSH//\//\\\/}'/g" README.template.md
 fi
 
 git rm README.md
