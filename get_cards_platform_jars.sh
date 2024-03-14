@@ -30,38 +30,23 @@ else
   GITHUB_CARDS_DOCKER_IMAGE="ghcr.io/data-team-uhn/cards:$(cat pom.xml | grep --max-count=1 '<cards.version>' | cut '-d>' -f2 | cut '-d<' -f1)"
   LOCAL_CARDS_DOCKER_IMAGE="cards/cards:latest"
 
-  VARIANT=0
-  echo "Use the local or published CARDS image?"
-  until [[ $VARIANT -eq "1" || $VARIANT -eq "2" ]]
-  do
-    echo "[1*] local"
-    echo "[2] published"
-    read -e VARIANT
-    if [[ -z $VARIANT ]]
+  whiptail --no-button="Local" --yes-button="Published" --yesno "Use the local or published CARDS image?" 10 80  3>&1 1>&2 2>&3 ; echo $?
+  VARIANT=$?
+  if [[ $VARIANT -eq 1 ]]
+  then
+    docker run --rm  --entrypoint /bin/sh $LOCAL_CARDS_DOCKER_IMAGE -c "ls -al /root/.m2/repository" >/dev/null 2>/dev/null
+    STATUS=$?
+    if [[ $STATUS -eq 125 ]]
     then
-       VARIANT=1
+      echo "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
+      exit -1
+    elif [[ $STATUS -eq 1 ]]
+    then
+      echo "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
     fi
+  fi
 
-    if [[ $VARIANT -ne "1" && $VARIANT -ne "2" ]]
-    then
-      echo "Unknown answer, please choose either 1 or 2"
-    elif [[ $VARIANT -eq "1" ]]
-    then
-      docker run --rm  --entrypoint /bin/sh $LOCAL_CARDS_DOCKER_IMAGE -c "ls -al /root/.m2/repository" >/dev/null 2>/dev/null
-      STATUS=$?
-      if [[ $STATUS -eq 125 ]]
-      then
-        echo "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
-        VARIANT=0
-      elif [[ $STATUS -eq 1 ]]
-      then
-        echo "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
-        VARIANT=0
-      fi
-    fi
-  done
-
-  if [[ $VARIANT -eq "1" ]]
+  if [[ $VARIANT -eq 1 ]]
   then
     GENERIC_CARDS_DOCKER_IMAGE=$LOCAL_CARDS_DOCKER_IMAGE
   else
