@@ -18,34 +18,41 @@
 # under the License.
 
 
-GITHUB_CARDS_DOCKER_IMAGE="ghcr.io/data-team-uhn/cards:$(cat pom.xml | grep --max-count=1 '<cards.version>' | cut '-d>' -f2 | cut '-d<' -f1)"
-LOCAL_CARDS_DOCKER_IMAGE="cards/cards:latest"
-
-VARIANT=0
-echo "Use the local or published CARDS image?"
-until [[ $VARIANT -eq "1" || $VARIANT -eq "2" ]]
-do
-  echo "[1*] local"
-  echo "[2] published"
-  read -e VARIANT
-  if [[ -z $VARIANT ]]
-  then
-     VARIANT=1
-  fi
-
-  if [[ $VARIANT -ne "1" && $VARIANT -ne "2" ]]
-  then
-    echo "Unknown answer, please choose either 1 or 2"
-  fi
-done
-
-if [[ $VARIANT -eq "1" ]]
+if [[ -n $1 ]]
 then
-  GENERIC_CARDS_DOCKER_IMAGE=$LOCAL_CARDS_DOCKER_IMAGE
+  if [[ $1 =~ .*-SNAPSHOT ]]
+  then
+    GENERIC_CARDS_DOCKER_IMAGE="cards/cards:latest"
+  else
+    GENERIC_CARDS_DOCKER_IMAGE="ghcr.io/data-team-uhn/cards:$1"
+  fi
 else
-  GENERIC_CARDS_DOCKER_IMAGE=$GITHUB_CARDS_DOCKER_IMAGE
-fi
+  GITHUB_CARDS_DOCKER_IMAGE="ghcr.io/data-team-uhn/cards:$(cat pom.xml | grep --max-count=1 '<cards.version>' | cut '-d>' -f2 | cut '-d<' -f1)"
+  LOCAL_CARDS_DOCKER_IMAGE="cards/cards:latest"
 
+  whiptail --no-button="Local" --yes-button="Published" --yesno "Use the local or published CARDS image?" 10 80  3>&1 1>&2 2>&3 ; echo $?
+  VARIANT=$?
+  if [[ $VARIANT -eq 1 ]]
+  then
+    docker run --rm  --entrypoint /bin/sh $LOCAL_CARDS_DOCKER_IMAGE -c "ls -al /root/.m2/repository" >/dev/null 2>/dev/null
+    STATUS=$?
+    if [[ $STATUS -eq 125 ]]
+    then
+      echo "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
+      exit -1
+    elif [[ $STATUS -eq 1 ]]
+    then
+      echo "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
+    fi
+  fi
+
+  if [[ $VARIANT -eq 1 ]]
+  then
+    GENERIC_CARDS_DOCKER_IMAGE=$LOCAL_CARDS_DOCKER_IMAGE
+  else
+    GENERIC_CARDS_DOCKER_IMAGE=$GITHUB_CARDS_DOCKER_IMAGE
+  fi
+fi
 mkdir -p .cards-generic-mvnrepo
 
 # Copy the files from the generic CARDS Docker image ~/.m2 directory to this local .cards-generic-mvnrepo directory
@@ -60,7 +67,7 @@ docker run \
 
 if [[ $? -ne 0 ]]
 then
-  echo "Failed to extract the needed files. Make sure you build a production-ready image, follow the instructions in the CARDS readme."
+  echo "Error: Failed to extract the needed files from the generic CARDS image."
   exit 1
 else
   echo "CARDS generic jars extracted!"

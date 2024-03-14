@@ -2,6 +2,7 @@
 target
 target-eclipse
 .mvnrepo
+.cards-generic-mvnrepo
 
 # IDEA
 *.iml
