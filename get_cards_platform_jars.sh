@@ -30,7 +30,7 @@ else
   GITHUB_CARDS_DOCKER_IMAGE="ghcr.io/data-team-uhn/cards:$(cat pom.xml | grep --max-count=1 '<cards.version>' | cut '-d>' -f2 | cut '-d<' -f1)"
   LOCAL_CARDS_DOCKER_IMAGE="cards/cards:latest"
 
-  whiptail --no-button="Local" --yes-button="Published" --yesno "Use the local or published CARDS image?" 10 80  3>&1 1>&2 2>&3 ; echo $?
+  whiptail --no-button="Local" --yes-button="Published" --yesno "Use the local or published CARDS image?" 10 80  3>&1 1>&2 2>&3
   VARIANT=$?
   if [[ $VARIANT -eq 1 ]]
   then
