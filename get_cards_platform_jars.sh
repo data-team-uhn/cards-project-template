@@ -38,11 +38,12 @@ else
     STATUS=$?
     if [[ $STATUS -eq 125 ]]
     then
-      echo "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
+      whiptail --msgbox "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again." 9 78
       exit -1
     elif [[ $STATUS -eq 1 ]]
     then
-      echo "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again."
+      whiptail --msgbox "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again." 9 78
+      exit -1
     fi
   fi
 
@@ -67,8 +68,8 @@ docker run \
 
 if [[ $? -ne 0 ]]
 then
-  echo "Error: Failed to extract the needed files from the generic CARDS image."
+  whiptail --msgbox "Error: Failed to extract the needed files from the generic CARDS image." 9 78
   exit 1
 else
-  echo "CARDS generic jars extracted!"
+  whiptail --msgbox "CARDS generic jars extracted!" 9 78
 fi
