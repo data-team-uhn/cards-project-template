@@ -138,25 +138,29 @@ do
 done
 selectedFeatures=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --checklist --notags "Other features to enable?" 38 78 30 $featurelist 3>&1 1>&2 2>&3)
 
-ADDITIONAL_SLING_FEATURES_DOCKER=''
-ADDITIONAL_SLING_FEATURES_STARTSH=''
+ADDITIONAL_SLING_FEATURES=''
 for i in $selectedFeatures
 do
-  ADDITIONAL_SLING_FEATURES_DOCKER+=",mvn:io.uhndata.cards/${i//\"/}/\$\${CARDS_VERSION}/slingosgifeature"
-  ADDITIONAL_SLING_FEATURES_STARTSH+=",mvn:io.uhndata.cards/${i//\"/}/\${CARDS_VERSION}/slingosgifeature"
+  ADDITIONAL_SLING_FEATURES+=$(cat << END
+
+    <dependency>
+      <groupId>io.uhndata.cards</groupId>
+      <artifactId>${i//\"/}</artifactId>
+      <version>\${cards.version}</version>
+      <type>slingosgifeature</type>
+      <scope>runtime</scope>
+    </dependency>
+END
+)
 done
-ADDITIONAL_SLING_FEATURES_DOCKER=${ADDITIONAL_SLING_FEATURES_DOCKER#,}
-ADDITIONAL_SLING_FEATURES_STARTSH=${ADDITIONAL_SLING_FEATURES_STARTSH#,}
-if [[ -z $ADDITIONAL_SLING_FEATURES_DOCKER ]]
+if [[ -n $ADDITIONAL_SLING_FEATURES ]]
 then
-  sed -i -e '/ADDITIONAL_SLING_FEATURES/,+4d' docker/docker_compose_env.json
-  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$//g" README.template.md
-  sed -i -e "s/ --env ADDITIONAL_SLING_FEATURES=\\\$ADDITIONAL_SLING_FEATURES_DOCKER\\\$//g" README.template.md
-else
-  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$/${ADDITIONAL_SLING_FEATURES_DOCKER//\//\\\/}/g" docker/docker_compose_env.json
-  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$/-f '${ADDITIONAL_SLING_FEATURES_STARTSH//\//\\\/}'/g" README.template.md
-  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES_DOCKER\\\$/'${ADDITIONAL_SLING_FEATURES_STARTSH//\//\\\/}'/g" README.template.md
+  TEMPDEPFILE=$(mktemp)
+  echo "$ADDITIONAL_SLING_FEATURES" > $TEMPDEPFILE
+  sed -i -e "/\\\$ADDITIONAL_SLING_FEATURES\\\$/r ${TEMPDEPFILE}" pom.xml
+  rm -f ${TEMPDEPFILE}
 fi
+sed -i -e "/\\\$ADDITIONAL_SLING_FEATURES\\\$/d" pom.xml
 
 git rm README.md
 git mv README.template.md README.md

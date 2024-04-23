@@ -76,7 +76,7 @@ Run `python3 generate_compose_yaml.py --help` to find out more about the paramet
 After you build a docker image, you can quickly run a non-persistent image with:
 
 ```bash
-docker run -it --rm --env OAK_FILESYSTEM=true --env ADDITIONAL_SLING_FEATURES=$ADDITIONAL_SLING_FEATURES_DOCKER$ -p 8080:8080 cards/$PROJECT_CODENAME$:latest
+docker run -it --rm --env OAK_FILESYSTEM=true -p 8080:8080 cards/$PROJECT_CODENAME$:latest
 ```
 
 #### Using `./start_cards.sh`
@@ -91,7 +91,7 @@ mvn clean install
 Then, start the project with (replace with the current version of this project):
 
 ```bash
-PROJECT_VERSION=1.0.0-SNAPSHOT ./start_cards.sh --dev --project $PROJECT_CODENAME$ $ADDITIONAL_SLING_FEATURES$
+PROJECT_VERSION=1.0.0-SNAPSHOT ./start_cards.sh --dev --project $PROJECT_CODENAME$
 ```
 
 $PROJECT_CODENAME$ will be available at http://localhost:8080 once it starts.

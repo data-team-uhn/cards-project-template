@@ -54,7 +54,12 @@
 
   <properties>
     <cards.version>$CARDS_VERSION$</cards.version>
+    <cards.project>$PROJECT_CODENAME$</cards.project>
   </properties>
+
+  <dependencies>
+$ADDITIONAL_SLING_FEATURES$
+  </dependencies>
 
   <modules>
     <module>backend</module>

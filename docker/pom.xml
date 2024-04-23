@@ -33,6 +33,35 @@
     <cardsBaseImage>cards/cards:${cards.version}</cardsBaseImage>
   </properties>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>io.uhndata.cards</groupId>
+            <artifactId>cards-license-resources</artifactId>
+            <version>1</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>generate-dependencies-resources</id>
+            <goals>
+              <goal>process</goal>
+            </goals>
+            <configuration>
+              <resourceBundles>
+                <resourceBundle>io.uhndata.cards:cards-project-dependencies-resources:2</resourceBundle>
+              </resourceBundles>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>latest</id>
