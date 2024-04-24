@@ -70,6 +70,7 @@ if [[ $? -ne 0 ]]
 then
   whiptail --msgbox "Error: Failed to extract the needed files from the generic CARDS image." 9 78
   exit 1
-else
+elif [[ -z $1 ]]
+then
   whiptail --msgbox "CARDS generic jars extracted!" 9 78
 fi
