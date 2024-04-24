@@ -122,12 +122,35 @@ then
   sed -i -e '/backend/d' pom.xml
 fi
 
+./get_cards_platform_jars.sh ${CARDS_VERSION}
+# Ask about the permission scheme
+
+# Get the list of features already included in the base distribution
+# Then get the list of all features known, excluding the cards4* projects
+# Then subtract included features from the list of all known features
+declare -a permissions=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/cards-dataentry/*/ -type f -name "*permissions_*.slingosgifeature" | sed -r -e "s/.*\/.*-${CARDS_VERSION}-permissions_(.*).slingosgifeature/\1/") )
+declare -i permissionCount=${#permissions[*]}
+declare permissionlist
+for (( i=0 ; i<permissionCount; i++ ))
+do
+  if [[ $i -eq 0 ]]
+  then
+    permissionlist+="${permissions[$i]} ${permissions[$i]} ON "
+  else
+    permissionlist+="${permissions[$i]} ${permissions[$i]} OFF "
+  fi
+done
+selectedPermission=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --radiolist --notags "Which permission scheme should be used?" 38 78 30 $permissionlist 3>&1 1>&2 2>&3)
+if [[ -z $selectedPermission ]]
+then
+  exit 1
+fi
+
 # Ask about other features to use
 
 # Get the list of features already included in the base distribution
 # Then get the list of all features known, excluding the cards4* projects
 # Then subtract included features from the list of all known features
-./get_cards_platform_jars.sh ${CARDS_VERSION}
 declare -a features=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/cards/${CARDS_VERSION}/ -type f -name '*slingosgifeature' | sed -r -e "s/.*${CARDS_VERSION}-(.*).slingosgifeature/-e \1/" -e /cards/d) )
 features=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/ -type f -name "*${CARDS_VERSION}.slingosgifeature" | grep -v -e 'cards4' | grep -v ${features[*]} | sed -r -e "s/.*\/(.*)-${CARDS_VERSION}.slingosgifeature/\1/") )
 declare -i featureCount=${#features[*]}
@@ -138,7 +161,17 @@ do
 done
 selectedFeatures=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --checklist --notags "Other features to enable?" 38 78 30 $featurelist 3>&1 1>&2 2>&3)
 
-ADDITIONAL_SLING_FEATURES=''
+ADDITIONAL_SLING_FEATURES="
+    <dependency>
+      <groupId>io.uhndata.cards</groupId>
+      <artifactId>cards-dataentry</artifactId>
+      <version>\${cards.version}</version>
+      <type>slingosgifeature</type>
+      <classifier>permissions_${selectedPermission}</classifier>
+      <scope>runtime</scope>
+    </dependency>
+"
+
 for i in $selectedFeatures
 do
   ADDITIONAL_SLING_FEATURES+=$(cat << END
