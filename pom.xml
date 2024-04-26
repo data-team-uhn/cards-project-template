@@ -55,6 +55,7 @@
   <properties>
     <cards.version>$CARDS_VERSION$</cards.version>
     <cards.project>$PROJECT_CODENAME$</cards.project>
+    <cards.defaultPermissionScheme>$DEFAULT_PERMISSION_SCHEME$</cards.defaultPermissionScheme>
   </properties>
 
   <dependencies>

@@ -140,8 +140,8 @@ do
     permissionlist+="${permissions[$i]} ${permissions[$i]} OFF "
   fi
 done
-selectedPermission=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --radiolist --notags "Which permission scheme should be used?" 38 78 30 $permissionlist 3>&1 1>&2 2>&3)
-if [[ -z $selectedPermission ]]
+DEFAULT_PERMISSION_SCHEME=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --radiolist --notags "Which permission scheme should be used?" 38 78 30 $permissionlist 3>&1 1>&2 2>&3)
+if [[ -z $DEFAULT_PERMISSION_SCHEME ]]
 then
   exit 1
 fi
@@ -161,16 +161,7 @@ do
 done
 selectedFeatures=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --checklist --notags "Other features to enable?" 38 78 30 $featurelist 3>&1 1>&2 2>&3)
 
-ADDITIONAL_SLING_FEATURES="
-    <dependency>
-      <groupId>io.uhndata.cards</groupId>
-      <artifactId>cards-dataentry</artifactId>
-      <version>\${cards.version}</version>
-      <type>slingosgifeature</type>
-      <classifier>permissions_${selectedPermission}</classifier>
-      <scope>runtime</scope>
-    </dependency>
-"
+ADDITIONAL_SLING_FEATURES=''
 
 for i in $selectedFeatures
 do
@@ -197,7 +188,7 @@ sed -i -e "/\\\$ADDITIONAL_SLING_FEATURES\\\$/d" pom.xml
 
 git rm README.md
 git mv README.template.md README.md
-find . -type f -exec sed -i -e "s/\\\$PROJECT_CODENAME\\\$/${PROJECT_CODENAME}/g" -e "s/\\\$PROJECT_NAME\\\$/${PROJECT_NAME}/g" -e "s/\\\$PROJECT_SHORTNAME\\\$/${PROJECT_SHORTNAME}/g" -e "s/\\\$CARDS_VERSION\\\$/${CARDS_VERSION}/g" {} +
+find . -type f -exec sed -i -e "s/\\\$PROJECT_CODENAME\\\$/${PROJECT_CODENAME}/g" -e "s/\\\$PROJECT_NAME\\\$/${PROJECT_NAME}/g" -e "s/\\\$PROJECT_SHORTNAME\\\$/${PROJECT_SHORTNAME}/g" -e "s/\\\$CARDS_VERSION\\\$/${CARDS_VERSION}/g" -e "s/\\\$DEFAULT_PERMISSION_SCHEME\\\$/${DEFAULT_PERMISSION_SCHEME}/g" {} +
 git rm setup.sh
 git add .
 git commit
