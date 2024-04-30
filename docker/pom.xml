@@ -173,10 +173,27 @@
                 <configuration>
                   <executable>bash</executable>
                   <workingDirectory>.</workingDirectory>
+                  <commandlineArgs>check_production_base_image.sh</commandlineArgs>
+                  <environmentVariables>
+                    <cardsBaseImage>${cardsBaseImage}</cardsBaseImage>
+                  </environmentVariables>
+                  <inheritIo>true</inheritIo>
+                  <useMavenLogger>true</useMavenLogger>
+                </configuration>
+                <id>check_production_base_image</id>
+                <phase>validate</phase>
+                <goals>
+                   <goal>exec</goal>
+                </goals>
+              </execution>
+              <execution>
+                <configuration>
+                  <executable>bash</executable>
+                  <workingDirectory>.</workingDirectory>
                   <commandlineArgs>get_project_jars.sh</commandlineArgs>
                 </configuration>
                 <id>get_project_jars</id>
-                <phase>install</phase>
+                <phase>prepare-package</phase>
                 <goals>
                    <goal>exec</goal>
                 </goals>
@@ -190,7 +207,7 @@
             <executions>
               <execution>
                 <id>build</id>
-                <phase>install</phase>
+                <phase>package</phase>
                 <goals>
                   <goal>build</goal>
                 </goals>
