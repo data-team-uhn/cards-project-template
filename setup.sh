@@ -68,11 +68,18 @@ fi
 
 # Ask about the project name
 
-PROJECT_CODENAME=$(whiptail --backtitle "New CARDS repository setup" --title "Project name" --inputbox "What is the project's codename? e.g. cards4sparc, cards4lfs" 8 78 cards4 3>&1 1>&2 2>&3)
-if [[ $? == 1 ]]
-then
-  exit 1
-fi
+declare PROJECT_CODENAME
+while [[ -z $PROJECT_CODENAME ]]
+do
+  PROJECT_CODENAME=$(whiptail --backtitle "New CARDS repository setup" --title "Project name" --inputbox "What is the project's codename? No uppercase letters are allowed, e.g. cards4sparc, cards4lfs" 8 78 cards4 3>&1 1>&2 2>&3)
+  if [[ $? == 1 ]]
+  then
+    exit 1
+  elif [[ ${PROJECT_CODENAME} != ${PROJECT_CODENAME,,} ]]
+  then
+    PROJECT_CODENAME=
+  fi
+done
 
 # Remove the cards4 prefix to get the short unprefixed name
 PROJECT_SHORTNAME=${PROJECT_CODENAME#cards4}
