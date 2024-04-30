@@ -122,7 +122,7 @@ then
   sed -i -e '/backend/d' pom.xml
 fi
 
-./get_cards_platform_jars.sh ${CARDS_VERSION}
+./get_cards_platform_jars.sh ${CARDS_VERSION} || exit -1
 # Ask about the permission scheme
 
 # Get the list of features already included in the base distribution
