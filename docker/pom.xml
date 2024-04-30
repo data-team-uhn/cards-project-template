@@ -130,7 +130,7 @@
                 <configuration>
                   <executable>bash</executable>
                   <workingDirectory>.</workingDirectory>
-                  <commandlineArgs>-c "mkdir -p .m2/repository"</commandlineArgs>
+                  <commandlineArgs>-c "rm -rf .m2/repository ; mkdir -p .m2/repository"</commandlineArgs>
                 </configuration>
                 <id>fake_project_jars</id>
                 <phase>install</phase>
