@@ -35,7 +35,8 @@ fi
 declare -a RELEASED_VERSIONS=( $(curl -s https://repo1.maven.org/maven2/io/uhndata/cards/cards-modules/maven-metadata.xml | grep '<version>' | tac | cut '-d>' -f2 | cut '-d<' -f1) )
 declare -i RELEASED_VERSIONS_COUNT=${#RELEASED_VERSIONS[*]}
 # Look on the local disk
-LOCAL_CARDS_VERSION=$(docker run --rm  --entrypoint /bin/sh cards/cards:latest -c "ls /root/.m2/repository/io/uhndata/cards/cards-parent/ | grep SNAPSHOT")
+# First check that the Docker image exists on the local machine
+(docker image inspect cards/cards:latest > /dev/null 2>/dev/null) && (LOCAL_CARDS_VERSION=$(docker run --rm  --entrypoint /bin/sh cards/cards:latest -c "ls /root/.m2/repository/io/uhndata/cards/cards-parent/ | grep SNAPSHOT"))
 declare VERSION
 declare HAS_DEFAULT
 for (( i=0 ; i<RELEASED_VERSIONS_COUNT; i++ ))
