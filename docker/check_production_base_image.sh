@@ -17,13 +17,20 @@
 # specific language governing permissions and limitations
 # under the License.
 
-docker run --rm  --entrypoint /bin/sh ${cardsBaseImage} -c "ls -al /root/.m2/repository" >/dev/null 2>/dev/null
-STATUS=$?
-if [[ $STATUS -eq 125 ]]
+# First check that the Docker image exists on the local machine
+if [[ ${cardsBaseImage} == cards/cards:latest ]]
 then
-  echo "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again." 1>&2
-  exit -1
-elif [[ $STATUS -eq 1 ]]
+  docker image inspect ${cardsBaseImage} >/dev/null 2>/dev/null
+  if [[ $? -ne 0 ]]
+  then
+    echo "No local image found, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again." 1>&2
+    exit -1
+  fi
+fi
+
+# Then check if it is a production image
+docker run --rm  --entrypoint /bin/sh ${cardsBaseImage} -c "ls -al /root/.m2/repository" >/dev/null 2>/dev/null
+if [[ $? -ne 0 ]]
 then
   echo "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again." 1>&2
   exit -1
