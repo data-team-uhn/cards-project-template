@@ -176,6 +176,7 @@
                   <commandlineArgs>check_production_base_image.sh</commandlineArgs>
                   <environmentVariables>
                     <cardsBaseImage>${cardsBaseImage}</cardsBaseImage>
+                    <cardsBaseVersion>${cards.version}</cardsBaseVersion>
                   </environmentVariables>
                   <inheritIo>true</inheritIo>
                   <useMavenLogger>true</useMavenLogger>

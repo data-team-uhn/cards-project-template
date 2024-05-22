@@ -29,9 +29,17 @@ then
 fi
 
 # Then check if it is a production image
-docker run --rm  --entrypoint /bin/sh ${cardsBaseImage} -c "ls -al /root/.m2/repository" >/dev/null 2>/dev/null
+docker run --rm  --entrypoint /bin/sh ${cardsBaseImage} -c "ls -1 /root/.m2/repository/io/uhndata/cards/cards" >/dev/null 2>/dev/null
 if [[ $? -ne 0 ]]
 then
   echo "The local image is not a production image, please rebuild it following the instructions for building a production-ready docker image in the CARDS README, then try again." 1>&2
+  exit -1
+fi
+
+# Then check if it is with the expected version
+docker run --rm  --entrypoint /bin/sh ${cardsBaseImage} -c "ls -1 /root/.m2/repository/io/uhndata/cards/cards/${cardsBaseVersion}/" >/dev/null 2>/dev/null
+if [[ $? -ne 0 ]]
+then
+  echo "The local image does not have the expected version ${cardsBaseVersion}, please build the correct version, then try again." 1>&2
   exit -1
 fi
