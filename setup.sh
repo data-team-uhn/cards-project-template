@@ -84,10 +84,6 @@ done
 
 # Remove the cards4 prefix to get the short unprefixed name
 PROJECT_SHORTNAME=${PROJECT_CODENAME#cards4}
-if [[ $? == 1 ]]
-then
-  exit 1
-fi
 
 PROJECT_NAME=$(whiptail --backtitle "New CARDS repository setup" --title "Project name" --inputbox "What is the project's user facing name? e.g SPARC, LFS Data Core" 8 78 3>&1 1>&2 2>&3)
 if [[ $? == 1 ]]
@@ -101,10 +97,18 @@ LOGO=/
 until [[ -f $(realpath "${LOGO/\~/$HOME}") ]]
 do
   LOGO=$(whiptail --backtitle "New CARDS repository setup" --title "Project logo" --inputbox "Please provide a logo for the project. It should be a file about 200px wide and 80px tall, and display well on a dark background." 8 78 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
+then
+  exit 1
+fi
   LOGO=${LOGO/\~/$HOME}
 done
 
 LOGO_LIGHT=$(whiptail --backtitle "New CARDS repository setup" --title "Project logo" --inputbox "Please provide a logo to be displayed on a light background. If the same image as before can be used, just press enter." 8 78 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
+then
+  exit 1
+fi
 LOGO_LIGHT=${LOGO_LIGHT/\~/$HOME}
 
 # Copy the logos in the right place and use the right path in the Media.json configuration file
@@ -168,6 +172,10 @@ do
   featurelist+="${features[$i]} ${features[$i]} OFF "
 done
 selectedFeatures=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --checklist --notags "Other features to enable?" 38 78 30 $featurelist 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
+then
+  exit 1
+fi
 
 ADDITIONAL_SLING_FEATURES=''
 
