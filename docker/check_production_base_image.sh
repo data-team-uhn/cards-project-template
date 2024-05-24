@@ -18,7 +18,7 @@
 # under the License.
 
 # First check that the Docker image exists on the local machine
-if [[ ${cardsBaseImage} == cards/cards:latest ]]
+if [[ ${cardsBaseImage} == cards/cards:* ]]
 then
   docker image inspect ${cardsBaseImage} >/dev/null 2>/dev/null
   if [[ $? -ne 0 ]]
