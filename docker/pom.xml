@@ -178,7 +178,6 @@
                     <cardsBaseImage>${cardsBaseImage}</cardsBaseImage>
                     <cardsBaseVersion>${cards.version}</cardsBaseVersion>
                   </environmentVariables>
-                  <inheritIo>true</inheritIo>
                   <useMavenLogger>true</useMavenLogger>
                 </configuration>
                 <id>check_production_base_image</id>
