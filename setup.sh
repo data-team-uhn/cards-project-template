@@ -16,6 +16,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+# Check the repo URL and main branch
+REPO_URL=$(git remote get-url origin)
+if [[ $REPO_URL == *data-team-uhn/cards-project-template.git ]]
+then
+  whiptail --backtitle "New CARDS repository setup" --title "Template repository location" --msgbox "This repository is supposed to be used as a template when creating a new repository through the github UI. You should create a new repository at github.com and select cards-project-template as the template to copy, clone the new repository, and run the setup script in there. Exiting." 10 78
+  exit 1
+fi
+# github uses two different formats for the repo url, ssh or http, while Maven expects a different format.
+# Convert the git remote URL to the format supported by Maven
+REPO_NAME=$(echo -n $REPO_URL | sed -E -e 's/.*data-team-uhn[/:](.*).git/\1/')
+MVN_READ_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/scm:git:git:\/\//' | sed -E -e 's/github.com:/github.com\//' | sed -e 's/\//\\\//g')
+MVN_WRITE_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/scm:git:git@/' | sed -E -e 's/github.com\//github.com:/' | sed -e 's/\//\\\//g')
+MVN_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/https:\/\//' | sed -E -e 's/github.com:/github.com\//' | sed -E -e "s/.git$/\/tree\/$(git rev-parse --abbrev-ref HEAD)\//" | sed -e 's/\//\\\//g')
+
 # Check the user's authorship configuration
 if ! $(git config user.name 1> /dev/null) || ! $(git config user.email 1> /dev/null)
 then
@@ -72,7 +86,7 @@ fi
 declare PROJECT_CODENAME
 while [[ -z $PROJECT_CODENAME ]]
 do
-  PROJECT_CODENAME=$(whiptail --backtitle "New CARDS repository setup" --title "Project name" --inputbox "What is the project's codename? No uppercase letters are allowed, e.g. cards4sparc, cards4lfs" 8 78 cards4 3>&1 1>&2 2>&3)
+  PROJECT_CODENAME=$(whiptail --backtitle "New CARDS repository setup" --title "Project name" --inputbox "What is the project's codename? No uppercase letters are allowed, e.g. cards4sparc, cards4lfs" 8 78 ${REPO_NAME} 3>&1 1>&2 2>&3)
   if [[ $? == 1 ]]
   then
     exit 1
@@ -205,6 +219,7 @@ sed -i -e "/\\\$ADDITIONAL_SLING_FEATURES\\\$/d" pom.xml
 git rm README.md
 git mv README.template.md README.md
 find . -type f -exec sed -i -e "s/\\\$PROJECT_CODENAME\\\$/${PROJECT_CODENAME}/g" -e "s/\\\$PROJECT_NAME\\\$/${PROJECT_NAME}/g" -e "s/\\\$PROJECT_SHORTNAME\\\$/${PROJECT_SHORTNAME}/g" -e "s/\\\$CARDS_VERSION\\\$/${CARDS_VERSION}/g" -e "s/\\\$DEFAULT_PERMISSION_SCHEME\\\$/${DEFAULT_PERMISSION_SCHEME}/g" {} +
+sed -i -e "s/\\\$MVN_READ_URL\\\$/${MVN_READ_URL}/g" -e "s/\\\$MVN_WRITE_URL\\\$/${MVN_WRITE_URL}/g" -e "s/\\\$MVN_URL\\\$/${MVN_URL}/g" pom.xml
 git rm setup.sh
 git add .
 git commit

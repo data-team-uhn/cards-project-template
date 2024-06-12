@@ -32,9 +32,9 @@
   <description>A CARDS based project.</description>
 
   <scm>
-    <connection>scm:git:git://github.com/data-team-uhn/$PROJECT_SHORTNAME$.git</connection>
-    <developerConnection>scm:git:git@github.com:data-team-uhn/$PROJECT_SHORTNAME$.git</developerConnection>
-    <url>https://github.com/data-team-uhn/$PROJECT_SHORTNAME$/tree/master/</url>
+    <connection>$MVN_READ_URL$</connection>
+    <developerConnection>$MVN_WRITE_URL$</developerConnection>
+    <url>$MVN_URL$</url>
     <tag>HEAD</tag>
   </scm>
 
