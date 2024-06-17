@@ -18,14 +18,14 @@
 
 # Check the repo URL and main branch
 REPO_URL=$(git remote get-url origin | sed -E -e 's/(\.git)?$/.git/')
-if [[ $REPO_URL == *data-team-uhn/cards-project-template.git ]]
+if [[ $REPO_URL == */cards-project-template.git ]]
 then
   whiptail --backtitle "New CARDS repository setup" --title "Template repository location" --msgbox "This repository is supposed to be used as a template when creating a new repository through the github UI. You should create a new repository at github.com and select cards-project-template as the template to copy, clone the new repository, and run the setup script in there. Exiting." 10 78
   exit 1
 fi
 # github uses two different formats for the repo url, ssh or http, while Maven expects a different format.
 # Convert the git remote URL to the format supported by Maven
-REPO_NAME=$(echo -n $REPO_URL | sed -E -e 's/.*data-team-uhn[/:](.*).git/\1/')
+REPO_NAME=$(echo -n $REPO_URL | sed -E -e 's/.*github.com[/:]([^\/]*)\/(.*).git/\2/')
 MVN_READ_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/scm:git:git:\/\//' | sed -E -e 's/github.com:/github.com\//' | sed -e 's/\//\\\//g')
 MVN_WRITE_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/scm:git:git@/' | sed -E -e 's/github.com\//github.com:/' | sed -e 's/\//\\\//g')
 MVN_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/https:\/\//' | sed -E -e 's/github.com:/github.com\//' | sed -E -e "s/.git$/\/tree\/$(git rev-parse --abbrev-ref HEAD)\//" | sed -e 's/\//\\\//g')
