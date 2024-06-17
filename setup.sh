@@ -17,7 +17,7 @@
 #  limitations under the License.
 
 # Check the repo URL and main branch
-REPO_URL=$(git remote get-url origin)
+REPO_URL=$(git remote get-url origin | sed -E -e 's/(\.git)?$/.git/')
 if [[ $REPO_URL == *data-team-uhn/cards-project-template.git ]]
 then
   whiptail --backtitle "New CARDS repository setup" --title "Template repository location" --msgbox "This repository is supposed to be used as a template when creating a new repository through the github UI. You should create a new repository at github.com and select cards-project-template as the template to copy, clone the new repository, and run the setup script in there. Exiting." 10 78
