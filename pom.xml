@@ -22,7 +22,7 @@
   <parent>
     <groupId>io.uhndata.cards</groupId>
     <artifactId>cards-parent</artifactId>
-    <version>1</version>
+    <version>$CARDS_VERSION$</version>
   </parent>
 
   <artifactId>$PROJECT_SHORTNAME$-parent</artifactId>
@@ -31,9 +31,12 @@
   <name>CARDS for $PROJECT_NAME$</name>
   <description>A CARDS based project.</description>
 
-  <properties>
-    <cards.version>$CARDS_VERSION$</cards.version>
-  </properties>
+  <scm>
+    <connection>$MVN_READ_URL$</connection>
+    <developerConnection>$MVN_WRITE_URL$</developerConnection>
+    <url>$MVN_URL$</url>
+    <tag>HEAD</tag>
+  </scm>
 
   <repositories>
     <repository>
@@ -49,10 +52,34 @@
     </repository>
   </repositories>
 
+  <properties>
+    <cards.version>$CARDS_VERSION$</cards.version>
+    <cards.project>$PROJECT_CODENAME$</cards.project>
+    <cards.defaultPermissionScheme>$DEFAULT_PERMISSION_SCHEME$</cards.defaultPermissionScheme>
+  </properties>
+
+  <dependencies>
+$ADDITIONAL_SLING_FEATURES$
+  </dependencies>
+
   <modules>
     <module>backend</module>
     <module>resources</module>
     <module>feature</module>
     <module>docker</module>
   </modules>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <configuration>
+          <arguments>-Pquick</arguments>
+          <preparationGoals>clean verify</preparationGoals>
+          <tagNameFormat>$PROJECT_SHORTNAME$-@{project.version}</tagNameFormat>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

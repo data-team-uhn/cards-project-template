@@ -25,6 +25,7 @@ FROM ${cardsBaseImage}
 RUN mkdir /external_project
 COPY project_code.txt /external_project
 COPY project_name.txt /external_project
+COPY target/maven-shared-archive-resources/sling-features.json /
 COPY docker_compose_env.json /external_project
 COPY project_logo.png /metadata/logo.png
 

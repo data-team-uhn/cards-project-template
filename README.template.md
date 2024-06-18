@@ -25,11 +25,11 @@ There are two sets of maven build profiles you can choose from:
 - if you want to use a `local`, `published`, or `latest` image for the base CARDS project
 - and if you want to build a `production` or `development` image
 
-A development image will be slimmer, since it skips copying any of the built JARs into the Docker image, so it must be used on the same machine where it was built, using the local maven repository as a source for dependencies.
+A _development_ image will be slimmer, since it skips copying any of the built JARs into the Docker image, so it must be used on the same machine where it was built, using the local maven repository as a source for dependencies.
 Therefore, the resultant image should only be used with the `--dev_docker_image` and `--cards_generic_jars_repo` flags for `generate_compose_yaml.py`.
 This is useful for testing new code during development as it does not require a new Docker image to be built every time that code is changed.
 
-A production image will be self-contained, and can be started on any computer, even without access to internet. In this case, the base CARDS image you use must also be a production image.
+A _production_ image will be self-contained, and can be started on any computer, even without access to internet. In this case, the base CARDS image you use must also be a production image.
 
 As for the base image to use, `local` will use a CARDS image built on the same computer, but with a version matching the `cards.version` property, e.g. `cards/cards:0.9.20`,
 `published` will use an image with a matching version fetched from our github package repository, e.g. `ghcr.io/data-team-uhn/cards:0.9.20`,
@@ -67,7 +67,17 @@ docker-compose up -d
 
 $PROJECT_CODENAME$ will be available at http://localhost:8080 once it starts.
 
+Run `python3 generate_compose_yaml.py --help` to find out more about the parameters supported by the script, such as using Mongo for storage, using different ports, or configuring SAML authentication.
+
 ### Development Mode
+
+#### Quick run with Docker
+
+After you build a docker image, you can quickly run a non-persistent image with:
+
+```bash
+docker run -it --rm --env OAK_FILESYSTEM=true -p 8080:8080 cards/$PROJECT_CODENAME$:latest
+```
 
 #### Using `./start_cards.sh`
 
@@ -81,7 +91,7 @@ mvn clean install
 Then, start the project with (replace with the current version of this project):
 
 ```bash
-PROJECT_VERSION=1.0.0-SNAPSHOT ./start_cards.sh --dev --project $PROJECT_CODENAME$ $ADDITIONAL_SLING_FEATURES$
+PROJECT_VERSION=1.0.0-SNAPSHOT ./start_cards.sh --dev --project $PROJECT_CODENAME$
 ```
 
 $PROJECT_CODENAME$ will be available at http://localhost:8080 once it starts.

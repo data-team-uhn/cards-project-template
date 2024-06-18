@@ -1,45 +1,128 @@
 #!/bin/bash
 
+#  Copyright 2023 DATA @ UHN. See the NOTICE file
+#  distributed with this work for additional information
+#  regarding copyright ownership.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+# Check the repo URL and main branch
+REPO_URL=$(git remote get-url origin | sed -E -e 's/(\.git)?$/.git/')
+if [[ $REPO_URL == */cards-project-template.git ]]
+then
+  whiptail --backtitle "New CARDS repository setup" --title "Template repository location" --msgbox "This repository is supposed to be used as a template when creating a new repository through the github UI. You should create a new repository at github.com and select cards-project-template as the template to copy, clone the new repository, and run the setup script in there. Exiting." 10 78
+  exit 1
+fi
+# github uses two different formats for the repo url, ssh or http, while Maven expects a different format.
+# Convert the git remote URL to the format supported by Maven
+REPO_NAME=$(echo -n $REPO_URL | sed -E -e 's/.*github.com[/:]([^\/]*)\/(.*).git/\2/')
+MVN_READ_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/scm:git:git:\/\//' | sed -E -e 's/github.com:/github.com\//' | sed -e 's/\//\\\//g')
+MVN_WRITE_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/scm:git:git@/' | sed -E -e 's/github.com\//github.com:/' | sed -e 's/\//\\\//g')
+MVN_URL=$(echo -n $REPO_URL | sed -E -e 's/(git@|https:\/\/)/https:\/\//' | sed -E -e 's/github.com:/github.com\//' | sed -E -e "s/.git$/\/tree\/$(git rev-parse --abbrev-ref HEAD)\//" | sed -e 's/\//\\\//g')
+
+# Check the user's authorship configuration
+if ! $(git config user.name 1> /dev/null) || ! $(git config user.email 1> /dev/null)
+then
+  whiptail --backtitle "New CARDS repository setup" --msgbox "You must configure the user name and email address with \"git config user.name Some Name\" and \"git config user.email somebody@email.com\" and then rerun this script. Exiting." 9 78
+  exit 1
+fi
+
+if ! whiptail --backtitle "New CARDS repository setup" --title "Please confirm git authorship details" --yesno "Committing as $(git config user.name) <$(git config user.email)>, OK?" 8 78
+then
+  whiptail --backtitle "New CARDS repository setup" --msgbox "You can configure the user name and email address with \"git config user.name Some Name\" and \"git config user.email somebody@email.com\" and then rerun this script. Exiting." 9 78
+  exit 1
+fi
+
 # Ask about the generic CARDS version to use
 
-# Get the latest CARDS version from Nexus
-CARDS_VERSION=$(curl -s https://nexus.phenotips.org/nexus/content/repositories/releases/io/uhndata/cards/cards-modules/maven-metadata.xml | grep --max-count=1 '<release>' | cut '-d>' -f2 | cut '-d<' -f1)
-if [[ -z $CARDS_VERSION ]]
+# Get the available CARDS versions from Maven Central
+declare -a RELEASED_VERSIONS=( $(curl -s https://repo1.maven.org/maven2/io/uhndata/cards/cards-modules/maven-metadata.xml | grep '<version>' | tac | cut '-d>' -f2 | cut '-d<' -f1) )
+declare -i RELEASED_VERSIONS_COUNT=${#RELEASED_VERSIONS[*]}
+# Look on the local disk
+# First check that the Docker image exists on the local machine
+(docker image inspect cards/cards:latest >/dev/null 2>/dev/null) && LOCAL_CARDS_VERSION=$(docker run --rm  --entrypoint /bin/sh cards/cards:latest -c "ls /root/.m2/repository/io/uhndata/cards/cards-parent/ 2>/dev/null | grep SNAPSHOT")
+declare VERSION
+declare HAS_DEFAULT
+for (( i=0 ; i<RELEASED_VERSIONS_COUNT; i++ ))
+do
+  VERSION="${VERSION} ${RELEASED_VERSIONS[$i]} ${RELEASED_VERSIONS[$i]} ${HAS_DEFAULT:-ON} "
+  HAS_DEFAULT=OFF
+done
+if [[ -n $LOCAL_CARDS_VERSION ]]
 then
-  # If Nexus isn't available, try to look on the local disk
-  CARDS_VERSION=$(grep --max-count=1 '^  <version>' ../cards/pom.xml | cut '-d>' -f2 | cut '-d<' -f1)
+  VERSION="${LOCAL_CARDS_VERSION} ${LOCAL_CARDS_VERSION} ${HAS_DEFAULT:-ON} ${VERSION}"
+  HAS_DEFAULT=OFF
 fi
-echo
-echo "Which version of the CARDS platform should be used?"
-read -e -i "$CARDS_VERSION" CARDS_VERSION
+VERSION="${VERSION} other other ${HAS_DEFAULT:-ON}"
+CARDS_VERSION=$(whiptail --backtitle "New CARDS repository setup" --title "Base CARDS version" --radiolist --notags "Which version of the CARDS platform should be used?" 38 78 30 $VERSION 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
+then
+  exit 1
+fi
+if [[ $CARDS_VERSION == "other" ]]
+then
+  until [[ $CARDS_VERSION != "other" && -n $CARDS_VERSION ]]
+  do
+    CARDS_VERSION=$(whiptail --backtitle "New CARDS repository setup" --title "Base CARDS version" --inputbox "Which version of the CARDS platform should be used? e.g. 0.9.22" 8 78 3>&1 1>&2 2>&3)
+    if [[ $? == 1 ]]
+    then
+      exit 1
+    fi
+  done
+fi
 
 # Ask about the project name
 
-echo "What is the project's codename, e.g. cards4sparc, cards4heracles"
-read -e -i cards4 PROJECT_CODENAME
+declare PROJECT_CODENAME
+while [[ -z $PROJECT_CODENAME ]]
+do
+  PROJECT_CODENAME=$(whiptail --backtitle "New CARDS repository setup" --title "Project name" --inputbox "What is the project's codename? No uppercase letters are allowed, e.g. cards4sparc, cards4lfs" 8 78 ${REPO_NAME} 3>&1 1>&2 2>&3)
+  if [[ $? == 1 ]]
+  then
+    exit 1
+  elif [[ ${PROJECT_CODENAME} != ${PROJECT_CODENAME,,} ]]
+  then
+    PROJECT_CODENAME=
+  fi
+done
 
 # Remove the cards4 prefix to get the short unprefixed name
 PROJECT_SHORTNAME=${PROJECT_CODENAME#cards4}
 
-echo
-echo "What is the project's user facing name, e.g SPARC, Heracles"
-read -e PROJECT_NAME
+PROJECT_NAME=$(whiptail --backtitle "New CARDS repository setup" --title "Project name" --inputbox "What is the project's user facing name? e.g SPARC, LFS Data Core" 8 78 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
+then
+  exit 1
+fi
 
 # Ask for the project logo
-
-echo
-LOGO=/
 # ~ doesn't work in scripts, so we manually replace it with $HOME
+LOGO=/
 until [[ -f $(realpath "${LOGO/\~/$HOME}") ]]
 do
-  echo "Please provide a logo for the project. It should be a file about 200px wide and 80px tall, and display well on a dark background."
-  read -e LOGO
+  LOGO=$(whiptail --backtitle "New CARDS repository setup" --title "Project logo" --inputbox "Please provide a logo for the project. It should be a file about 200px wide and 80px tall, and display well on a dark background." 8 78 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
+then
+  exit 1
+fi
   LOGO=${LOGO/\~/$HOME}
 done
 
-echo
-echo "Please provide a logo to be displayed on a light background. If the same image as before can be used, just press enter."
-read -e LOGO_LIGHT
+LOGO_LIGHT=$(whiptail --backtitle "New CARDS repository setup" --title "Project logo" --inputbox "Please provide a logo to be displayed on a light background. If the same image as before can be used, just press enter." 8 78 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
+then
+  exit 1
+fi
 LOGO_LIGHT=${LOGO_LIGHT/\~/$HOME}
 
 # Copy the logos in the right place and use the right path in the Media.json configuration file
@@ -58,25 +141,32 @@ else
 fi
 
 # Check if the backend module can be removed
-
-echo
-echo "Does the project have backend code?"
-HAS_BACKEND=maybe
-until [[ $HAS_BACKEND == "yes" || $HAS_BACKEND == "no" ]]
-do
-  read -e -p "[yes|no] " -i "no" HAS_BACKEND
-
-  if [[ $HAS_BACKEND != "yes" && $HAS_BACKEND != "no" ]]
-  then
-    echo "Unknown answer, please type either yes or no"
-  fi
-done
-
-if [[ $HAS_BACKEND == "no" ]]
+if ! whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --yesno "Does the project have backend code?" 8 78
 then
   git rm -rf backend
   sed -i -e '/backend/,+3d' feature/src/main/features/feature.json
   sed -i -e '/backend/d' pom.xml
+fi
+
+./get_cards_platform_jars.sh ${CARDS_VERSION} || exit -1
+
+# Ask about the permission scheme
+declare -a permissions=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/cards-dataentry/*/ -type f -name "*permissions_*.slingosgifeature" | sed -r -e "s/.*\/.*-permissions_(.*).slingosgifeature/\1/") )
+declare -i permissionCount=${#permissions[*]}
+declare permissionlist
+for (( i=0 ; i<permissionCount; i++ ))
+do
+  if [[ $i -eq 0 ]]
+  then
+    permissionlist+="${permissions[$i]} ${permissions[$i]} ON "
+  else
+    permissionlist+="${permissions[$i]} ${permissions[$i]} OFF "
+  fi
+done
+DEFAULT_PERMISSION_SCHEME=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --radiolist --notags "Which permission scheme should be used?" 38 78 30 $permissionlist 3>&1 1>&2 2>&3)
+if [[ -z $DEFAULT_PERMISSION_SCHEME ]]
+then
+  exit 1
 fi
 
 # Ask about other features to use
@@ -84,64 +174,49 @@ fi
 # Get the list of features already included in the base distribution
 # Then get the list of all features known, excluding the cards4* projects
 # Then subtract included features from the list of all known features
-declare -a features=( $(find ~/.m2/repository/io/uhndata/cards/cards/${CARDS_VERSION}/ -type f -name '*slingosgifeature' | sed -r -e "s/.*${CARDS_VERSION}-(.*).slingosgifeature/-e \1/" -e /cards/d) )
-features=( $(find ~/.m2/repository/io/uhndata/cards/ -type f -name "*${CARDS_VERSION}.slingosgifeature" | grep -v -e 'cards4' | grep -v ${features[*]} | sed -r -e "s/.*\/(.*)-${CARDS_VERSION}.slingosgifeature/\1/") )
+declare -a features=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/cards/${CARDS_VERSION}/ -type f -name '*slingosgifeature' | sed -r -e "s/.*${CARDS_VERSION}-(.*).slingosgifeature/-e \1/" -e /cards/d) )
+features=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/ -type f -name "*${CARDS_VERSION%SNAPSHOT}*.slingosgifeature" | grep -v ${features[*]} | sed -r -e "s/.*\/(.*)-${CARDS_VERSION%SNAPSHOT}.*.slingosgifeature/\1/" | grep -v -e 'cards4' -e '^cards$') )
 declare -i featureCount=${#features[*]}
-declare -a featureSelection
+declare featurelist
 for (( i=0 ; i<featureCount; i++ ))
 do
-  featureSelection[${i}]=0
+  featurelist+="${features[$i]} ${features[$i]} OFF "
 done
-echo
-echo "Other features to enable?"
-SELECTION=-1
-until [[ -z $SELECTION ]]
-do
-  for (( i=0 ; i<featureCount ; i++ ))
-  do
-    echo -n $(($i+1)) '['
-    if [[ ${featureSelection[${i}]} -eq 1 ]]
-    then
-      echo -n '*'
-    else
-      echo -n ' '
-    fi
-    echo ']' ${features[$i]}
-  done
-  read -e SELECTION
-  if [[ $SELECTION -ge 1 ]]
-  then
-    featureSelection[$((${SELECTION}-1))]=1
-  elif [[ $SELECTION -le -1 ]]
-  then
-    featureSelection[$((-1 - ${SELECTION}))]=0
-  fi
-done
-
-ADDITIONAL_SLING_FEATURES_DOCKER=''
-ADDITIONAL_SLING_FEATURES_STARTSH=''
-for (( i=0 ; i<featureCount ; i++ ))
-do
-  if [[ ${featureSelection[$i]} -eq 1 ]]
-  then
-    ADDITIONAL_SLING_FEATURES_DOCKER+=",mvn:io.uhndata.cards/${features[$i]}/\$\${CARDS_VERSION}/slingosgifeature"
-    ADDITIONAL_SLING_FEATURES_STARTSH+=",mvn:io.uhndata.cards/${features[$i]}/\${CARDS_VERSION}/slingosgifeature"
-  fi
-done
-ADDITIONAL_SLING_FEATURES_DOCKER=${ADDITIONAL_SLING_FEATURES_DOCKER#,}
-ADDITIONAL_SLING_FEATURES_STARTSH=${ADDITIONAL_SLING_FEATURES_STARTSH#,}
-if [[ -z $ADDITIONAL_SLING_FEATURES_DOCKER ]]
+selectedFeatures=$(whiptail --backtitle "New CARDS repository setup" --title "Modules setup" --checklist --notags "Other features to enable?" 38 78 30 $featurelist 3>&1 1>&2 2>&3)
+if [[ $? == 1 ]]
 then
-  sed -i -e '/ADDITIONAL_SLING_FEATURES/,+4d' docker/docker_compose_env.json
-  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$//g" README.template.md
-else
-  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$/${ADDITIONAL_SLING_FEATURES_DOCKER//\//\\\/}/g" docker/docker_compose_env.json
-  sed -i -e "s/\\\$ADDITIONAL_SLING_FEATURES\\\$/-f '${ADDITIONAL_SLING_FEATURES_STARTSH//\//\\\/}'/g" README.template.md
+  exit 1
 fi
+
+ADDITIONAL_SLING_FEATURES=''
+
+for i in $selectedFeatures
+do
+  ADDITIONAL_SLING_FEATURES+=$(cat << END
+
+    <dependency>
+      <groupId>io.uhndata.cards</groupId>
+      <artifactId>${i//\"/}</artifactId>
+      <version>\${cards.version}</version>
+      <type>slingosgifeature</type>
+      <scope>runtime</scope>
+    </dependency>
+END
+)
+done
+if [[ -n $ADDITIONAL_SLING_FEATURES ]]
+then
+  TEMPDEPFILE=$(mktemp)
+  echo "$ADDITIONAL_SLING_FEATURES" > $TEMPDEPFILE
+  sed -i -e "/\\\$ADDITIONAL_SLING_FEATURES\\\$/r ${TEMPDEPFILE}" pom.xml
+  rm -f ${TEMPDEPFILE}
+fi
+sed -i -e "/\\\$ADDITIONAL_SLING_FEATURES\\\$/d" pom.xml
 
 git rm README.md
 git mv README.template.md README.md
-find . -type f -exec sed -i -e "s/\\\$PROJECT_CODENAME\\\$/${PROJECT_CODENAME}/g" -e "s/\\\$PROJECT_NAME\\\$/${PROJECT_NAME}/g" -e "s/\\\$PROJECT_SHORTNAME\\\$/${PROJECT_SHORTNAME}/g" -e "s/\\\$CARDS_VERSION\\\$/${CARDS_VERSION}/g" {} +
+find . -type f -exec sed -i -e "s/\\\$PROJECT_CODENAME\\\$/${PROJECT_CODENAME}/g" -e "s/\\\$PROJECT_NAME\\\$/${PROJECT_NAME}/g" -e "s/\\\$PROJECT_SHORTNAME\\\$/${PROJECT_SHORTNAME}/g" -e "s/\\\$CARDS_VERSION\\\$/${CARDS_VERSION}/g" -e "s/\\\$DEFAULT_PERMISSION_SCHEME\\\$/${DEFAULT_PERMISSION_SCHEME}/g" {} +
+sed -i -e "s/\\\$MVN_READ_URL\\\$/${MVN_READ_URL}/g" -e "s/\\\$MVN_WRITE_URL\\\$/${MVN_WRITE_URL}/g" -e "s/\\\$MVN_URL\\\$/${MVN_URL}/g" pom.xml
 git rm setup.sh
 git add .
 git commit

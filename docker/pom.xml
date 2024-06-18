@@ -33,6 +33,58 @@
     <cardsBaseImage>cards/cards:${cards.version}</cardsBaseImage>
   </properties>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>io.uhndata.cards</groupId>
+            <artifactId>cards-license-resources</artifactId>
+            <version>1</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>generate-dependencies-resources</id>
+            <goals>
+              <goal>process</goal>
+            </goals>
+            <configuration>
+              <resourceBundles>
+                <resourceBundle>io.uhndata.cards:cards-project-dependencies-resources:3</resourceBundle>
+              </resourceBundles>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>attach-artifacts</id>
+            <phase>package</phase>
+            <goals>
+              <goal>attach-artifact</goal>
+            </goals>
+            <configuration>
+              <artifacts>
+                <artifact>
+                  <file>${project.build.directory}/maven-shared-archive-resources/sling-features.json</file>
+                  <type>dependencies</type>
+                </artifact>
+              </artifacts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <profiles>
     <profile>
       <id>latest</id>
@@ -78,7 +130,7 @@
                 <configuration>
                   <executable>bash</executable>
                   <workingDirectory>.</workingDirectory>
-                  <commandlineArgs>-c "mkdir -p .m2/repository"</commandlineArgs>
+                  <commandlineArgs>-c "rm -rf .m2/repository ; mkdir -p .m2/repository"</commandlineArgs>
                 </configuration>
                 <id>fake_project_jars</id>
                 <phase>install</phase>
@@ -95,7 +147,7 @@
             <executions>
               <execution>
                 <id>build</id>
-                <phase>install</phase>
+                <phase>package</phase>
                 <goals>
                   <goal>build</goal>
                 </goals>
@@ -121,10 +173,27 @@
                 <configuration>
                   <executable>bash</executable>
                   <workingDirectory>.</workingDirectory>
+                  <commandlineArgs>check_production_base_image.sh</commandlineArgs>
+                  <environmentVariables>
+                    <cardsBaseImage>${cardsBaseImage}</cardsBaseImage>
+                    <cardsBaseVersion>${cards.version}</cardsBaseVersion>
+                  </environmentVariables>
+                  <useMavenLogger>true</useMavenLogger>
+                </configuration>
+                <id>check_production_base_image</id>
+                <phase>validate</phase>
+                <goals>
+                   <goal>exec</goal>
+                </goals>
+              </execution>
+              <execution>
+                <configuration>
+                  <executable>bash</executable>
+                  <workingDirectory>.</workingDirectory>
                   <commandlineArgs>get_project_jars.sh</commandlineArgs>
                 </configuration>
                 <id>get_project_jars</id>
-                <phase>install</phase>
+                <phase>prepare-package</phase>
                 <goals>
                    <goal>exec</goal>
                 </goals>
@@ -138,7 +207,7 @@
             <executions>
               <execution>
                 <id>build</id>
-                <phase>install</phase>
+                <phase>package</phase>
                 <goals>
                   <goal>build</goal>
                 </goals>
