@@ -149,11 +149,8 @@ then
 fi
 
 ./get_cards_platform_jars.sh ${CARDS_VERSION} || exit -1
-# Ask about the permission scheme
 
-# Get the list of features already included in the base distribution
-# Then get the list of all features known, excluding the cards4* projects
-# Then subtract included features from the list of all known features
+# Ask about the permission scheme
 declare -a permissions=( $(find .cards-generic-mvnrepo/repository/io/uhndata/cards/cards-dataentry/*/ -type f -name "*permissions_*.slingosgifeature" | sed -r -e "s/.*\/.*-permissions_(.*).slingosgifeature/\1/") )
 declare -i permissionCount=${#permissions[*]}
 declare permissionlist
