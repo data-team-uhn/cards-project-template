@@ -30,6 +30,12 @@
   <name>$PROJECT_NAME$ - Resources</name>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
     <plugins>
       <!-- This is an OSGi bundle -->
       <plugin>
@@ -43,6 +49,7 @@
               SLING-INF/content/libs/cards/resources/media/$PROJECT_SHORTNAME$/;path:=/libs/cards/resources/media/$PROJECT_SHORTNAME$/;overwrite:=true;uninstall:=true,
               SLING-INF/content/libs/cards/conf/Media.json;path:=/libs/cards/conf/Media;overwriteProperties:=true,
               SLING-INF/content/libs/cards/conf/AppName.json;path:=/libs/cards/conf/AppName;overwriteProperties:=true,
+              SLING-INF/content/libs/cards/conf/AppVersion.json;path:=/libs/cards/conf/AppVersion;overwriteProperties:=true,
               SLING-INF/content/libs/cards/conf/ThemeColor.json;path:=/libs/cards/conf/ThemeColor;overwriteProperties:=true,
             </Sling-Initial-Content>
           </instructions>
